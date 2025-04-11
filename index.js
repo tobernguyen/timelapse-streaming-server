@@ -84,12 +84,25 @@ app.get('/api/video/:camera', (req, res) => {
 // Live stream images from a specific camera (if snapshots are available)
 app.get('/api/stream/:camera', (req, res) => {
     const camera = req.params.camera;
-    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const snapshotFolder = path.join(SNAPSHOT_FOLDER, camera, today);
+    const cameraFolder = path.join(SNAPSHOT_FOLDER, camera);
     
-    if (!fs.existsSync(snapshotFolder)) {
-        return res.status(404).json({ error: 'No live snapshots available for this camera' });
+    if (!fs.existsSync(cameraFolder)) {
+        return res.status(404).json({ error: 'No snapshots available for this camera' });
     }
+
+    // Find all date folders and sort them to get the latest
+    const isDirectory = source => fs.lstatSync(source).isDirectory();
+    const dateFolders = fs.readdirSync(cameraFolder)
+        .filter(name => isDirectory(path.join(cameraFolder, name)))
+        .sort(); // Sort alphanumerically - dates in YYYYMMDD format will sort chronologically
+    
+    if (dateFolders.length === 0) {
+        return res.status(404).json({ error: 'No snapshot dates available for this camera' });
+    }
+    
+    // Get the latest date folder
+    const latestDate = dateFolders[dateFolders.length - 1];
+    const snapshotFolder = path.join(cameraFolder, latestDate);
 
     let images = fs.readdirSync(snapshotFolder).filter(file => file.endsWith('.jpg'));
     if (images.length === 0) {
