@@ -5,6 +5,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const TIMELAPSE_FOLDER = process.env.TIMELAPSE_FOLDER || path.join(__dirname, 'timelapse');
+const SNAPSHOT_FOLDER = process.env.SNAPSHOT_FOLDER || path.join(__dirname, 'snapshots');
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -84,7 +85,7 @@ app.get('/api/video/:camera', (req, res) => {
 app.get('/api/stream/:camera', (req, res) => {
     const camera = req.params.camera;
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const snapshotFolder = path.join(TIMELAPSE_FOLDER, '..', 'snapshots', camera, today);
+    const snapshotFolder = path.join(SNAPSHOT_FOLDER, camera, today);
     
     if (!fs.existsSync(snapshotFolder)) {
         return res.status(404).json({ error: 'No live snapshots available for this camera' });
